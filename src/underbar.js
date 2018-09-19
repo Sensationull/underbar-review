@@ -7,6 +7,7 @@
   // seem very useful, but remember it--if a function needs to provide an
   // iterator when the user does not pass one in, this will be handy.
   _.identity = function(val) {
+    return val;
   };
 
   /**
@@ -37,6 +38,14 @@
   // Like first, but for the last elements. If n is undefined, return just the
   // last element.
   _.last = function(array, n) {
+    if (n === undefined) {
+      return array[array.length - 1];
+    }
+    if (n === 0) {
+      return [];
+    }
+    return array.slice(-n);
+    // return n === undefined ? array[array.length-1] : array.slice(-n);
   };
 
   // Call iterator(value, key, collection) for each element of collection.
@@ -45,6 +54,15 @@
   // Note: _.each does not have a return value, but rather simply runs the
   // iterator function over each item in the input collection.
   _.each = function(collection, iterator) {
+    if (Array.isArray(collection)) {
+      for (var i = 0; i < collection.length; i++) {
+        iterator(collection[i], i, collection);
+      }
+    } else if (typeof collection === 'object') {
+      for (var prop in collection) {
+        iterator(collection[prop], prop, collection);
+      }
+    }
   };
 
   // Returns the index at which value can be found in the array, or -1 if value
@@ -66,16 +84,66 @@
 
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
+    var arr = [];
+    _.each(collection, function(element) {
+      if (test(element) === true) {
+        arr.push(element);
+      }
+    });
+    return arr;
   };
 
   // Return all elements of an array that don't pass a truth test.
   _.reject = function(collection, test) {
-    // TIP: see if you can re-use _.filter() here, without simply
-    // copying code in and modifying it
+    // var arr = [];
+    // for (var i = 0; i < collection.length; i++) {
+    //   if (test(collection[i]) === false) { 
+    //     arr.push(collection[i]);
+    //   }
+    // }
+    // return arr;
+    var arr = [];
+    _.each(collection, function(element) {
+      if (test(element) === false) {
+        arr.push(element);
+      }
+    });
+    return arr;
   };
 
   // Produce a duplicate-free version of the array.
+  // inputs: an array
+  // outputs: a duplicate-free array
+  // constraints: if an iterator is passed, it should return uniq values
+
+  /*
+    strategy:
+    create an empty array
+    for each item in the array
+      if no iterator is passed
+        find uniq values (if empty Arr.includes())
+    return the array
+      if iterator is passed
+  */
   _.uniq = function(array, isSorted, iterator) {
+    if (arguments[2] === undefined) {
+      var arr = [];
+      for (var i = 0; i < array.length; i++) {
+        if (!arr.includes(array[i])) {
+          arr.push(array[i]);
+        } 
+      }
+      return arr;
+    }  
+    // if (iterator) {
+    //   var arr = [];
+    //   for (var i = 0; i < array.length; i++) {
+    //     if (!arr.includes(iterator(array[i]))) {
+    //       arr.push(array[i]);
+    //     }
+    //   }
+    //   return arr;
+    // }
   };
 
 
@@ -84,6 +152,11 @@
     // map() is a useful primitive iteration function that works a lot
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
+    var arr = [];
+    for (var i = 0; i < collection.length; i++) {
+      arr.push(iterator(collection[i]));
+    }
+    return arr;
   };
 
   /*
@@ -125,32 +198,91 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
+    for (var i = 0; i < collection.length; i++) {
+      if (accumulator === undefined && i === 0) {
+        accumulator = collection[0];
+      } else {
+        accumulator = iterator(accumulator, collection[i]);
+      }
+    }
+    return accumulator;
   };
 
   // Determine if the array or object contains a given value (using `===`).
   _.contains = function(collection, target) {
     // TIP: Many iteration problems can be most easily expressed in
     // terms of reduce(). Here's a freebie to demonstrate!
-    return _.reduce(collection, function(wasFound, item) {
+    if (!Array.isArray(collection)) {
+      collection = Object.values(collection); 
+    }
+    return _.reduce(collection, function(wasFound, item) { // {}
       if (wasFound) {
         return true;
       }
       return item === target;
-    }, false);
-  };
+    }, false); 
+  }; 
 
 
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
-  };
+   
+  /*
+   // inputs: a collection 
+      outputs: a boolean 
+      constraints: use reduce
+    strategy:
+    set the accumulator to true;
+    iterate through the array (use reduce)
+      on each iteration on test the current item against the predicate
+        if it's true, return the accumulator?
+      if it's false, return false;
+  */if (collection.length === 0) {
+      return true;
+    }
+    if (iterator) {
+      for (var i = 0; i < collection.length; i++) {
+        if (!iterator(collection[i])) {
+          return false; 
+        } 
+      }
+    } else {
+      for (var i = 0; i < collection.length; i++) {
+        if (collection[i] === false) {
+          return false; 
+        } 
+      }
+    }
+    return true;
+  }; //[1, 3, 4, 5], function(num){return num % 2 !==0}
+
+
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    if (collection.length === 0) {
+      return false;
+    }
+    if (iterator) {
+      for (var i = 0; i < collection.length; i++) {
+        if (iterator(collection[i])) {
+          return true; 
+          break;
+        } 
+      }
+    } else {
+      for (var i = 0; i < collection.length; i++) {
+        if (collection[i] === true) {
+          return true; 
+          break;
+        } 
+      }
+    }
+    return false;
   };
-
 
   /**
    * OBJECTS
@@ -171,13 +303,37 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    // var obj2 = Object.assign(obj);
+    // return obj2;
+  //   var obj2 = Object.assign(arguments, obj);
+  //   return obj2; 
+  // };
+    var arr = Array.from(arguments);
+    var destinationObj = arr[0];
+    for ( var i = 1; i < arr.length; i++) {
+      var miniObj = arr[i];
+      for (var prop in miniObj) {
+        destinationObj[prop] = miniObj[prop];
+      }
+    }
+    return destinationObj;
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    var arr = Array.from(arguments);
+    var destinationObj = arr[0];
+    for ( var i = 1; i < arr.length; i++) {
+      var miniObj = arr[i];
+      for (var prop in miniObj) {
+        if (!destinationObj.hasOwnProperty(prop)) {
+          destinationObj[prop] = miniObj[prop];
+        }
+      }
+    }
+    return destinationObj;
   };
-
 
   /**
    * FUNCTIONS
@@ -203,6 +359,7 @@
         // TIP: .apply(this, arguments) is the standard way to pass on all of the
         // infromation from one function call to another.
         result = func.apply(this, arguments);
+        //result = func(...arguments); these two work the same
         alreadyCalled = true;
       }
       // The new function always returns the originally computed result.
@@ -218,7 +375,42 @@
   // _.memoize should return a function that, when called, will check if it has
   // already computed the result for the given argument and return that value
   // instead if possible.
+  // where to begin with memoize
+  // store as an object? inside a variable?
+  // recalling the value 
+  //
+
+  /*
+    inputs: a function
+    outputs: a function
+    constraints: if the function has been called, return the result of calling that function
+    
+    strategy:
+    check if the function has been called 
+      if it has return the result
+    if it hasn't been called
+      store the value of the call so that it can be returned?
+  */
   _.memoize = function(func) {
+    
+    var memorized = false;
+    var result;
+    return function() {
+      if (!memorized) {
+        memorized = true;
+        result = func(...arguments);
+      }
+    return result;
+    };
+    // var obj = {};
+    // if (obj.hasOwnProperty(func)) {
+    //   var answer = func(...arguments);
+    //   return answer;
+    // } else {
+    //   var result = func(...arguments);
+    //   return obj[result];
+    // }
+    
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -228,6 +420,7 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    setTimeout(...arguments);
   };
 
 
